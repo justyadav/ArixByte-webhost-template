@@ -6,18 +6,23 @@ echo "======================================"
 echo "     ArixByte Web Hosting"
 echo "======================================"
 
+
 echo "⏳ Preparing folders..."
 
-mkdir -p /home/container/logs
 mkdir -p /home/container/logs/nginx
 mkdir -p /home/container/logs/php
-mkdir -p /home/container/tmp
 mkdir -p /home/container/tmp/nginx/client_body
 mkdir -p /home/container/tmp/nginx/proxy
 mkdir -p /home/container/tmp/nginx/fastcgi
+mkdir -p /home/container/tmp/nginx/uwsgi
 
+
+# ==============================
+# PHP-FPM
+# ==============================
 
 echo "⏳ Configuring PHP-FPM..."
+
 
 cat > /home/container/php-fpm.conf <<EOF
 [global]
@@ -43,7 +48,13 @@ sleep 2
 echo "✅ PHP-FPM started successfully"
 
 
-echo "⏳ Configuring Nginx..."
+
+# ==============================
+# NGINX
+# ==============================
+
+
+echo "⏳ Creating Nginx configuration..."
 
 
 cat > /home/container/nginx.conf <<EOF
@@ -56,13 +67,17 @@ pid /home/container/tmp/nginx.pid;
 
 
 events {
+
     worker_connections 1024;
+
 }
 
 
 http {
 
+
     include /etc/nginx/mime.types;
+
 
     default_type application/octet-stream;
 
@@ -71,13 +86,49 @@ http {
 
 
     client_body_temp_path /home/container/tmp/nginx/client_body;
-
     proxy_temp_path /home/container/tmp/nginx/proxy;
-
     fastcgi_temp_path /home/container/tmp/nginx/fastcgi;
+    uwsgi_temp_path /home/container/tmp/nginx/uwsgi;
 
 
-    include /etc/nginx/http.d/*.conf;
+    server {
+
+
+        listen 80;
+
+
+        root /home/container/webroot;
+
+
+        index index.php index.html;
+
+
+        location / {
+
+
+            try_files \$uri \$uri/ /index.php?\$query_string;
+
+
+        }
+
+
+        location ~ \.php\$ {
+
+
+            fastcgi_pass 127.0.0.1:9000;
+
+
+            include fastcgi_params;
+
+
+            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+
+
+        }
+
+
+    }
+
 
 }
 
