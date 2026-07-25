@@ -3,17 +3,26 @@
 cd /home/container || exit 1
 
 echo "======================================"
-echo "     ArixByte Web Hosting"
+echo "        ArixByte Web Hosting"
 echo "======================================"
 
-echo "⏳ Preparing folders..."
+echo "⏳ Cleaning temporary files..."
 
-mkdir -p /home/container/logs
-mkdir -p /home/container/tmp
-
-
-echo "⏳ Starting Web Services..."
+rm -rf /tmp/*
 
 
-# Use container default startup
-/usr/local/bin/start.sh
+echo "⏳ Starting PHP-FPM..."
+
+php-fpm -D
+
+
+sleep 2
+
+
+echo "✅ PHP-FPM started successfully"
+
+
+echo "⏳ Starting Nginx..."
+
+
+nginx -g "daemon off;"
