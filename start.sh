@@ -21,8 +21,7 @@ mkdir -p /home/container/tmp/nginx/uwsgi
 # PHP-FPM
 # ==============================
 
-echo "⏳ Configuring PHP-FPM..."
-
+echo "⏳ Starting PHP-FPM..."
 
 cat > /home/container/php-fpm.conf <<EOF
 [global]
@@ -35,8 +34,6 @@ include=/etc/php84/php-fpm.d/*.conf
 EOF
 
 
-echo "⏳ Starting PHP-FPM..."
-
 php-fpm8 \
 -y /home/container/php-fpm.conf \
 -D
@@ -44,15 +41,13 @@ php-fpm8 \
 
 sleep 2
 
-
 echo "✅ PHP-FPM started successfully"
 
 
 
 # ==============================
-# NGINX
+# NGINX CONFIG
 # ==============================
-
 
 echo "⏳ Creating Nginx configuration..."
 
@@ -75,8 +70,9 @@ events {
 
 http {
 
-
     include /etc/nginx/mime.types;
+
+    include /etc/nginx/fastcgi_params;
 
 
     default_type application/octet-stream;
@@ -105,9 +101,7 @@ http {
 
         location / {
 
-
             try_files \$uri \$uri/ /index.php?\$query_string;
-
 
         }
 
@@ -118,11 +112,10 @@ http {
             fastcgi_pass 127.0.0.1:9000;
 
 
-            include fastcgi_params;
+            include /etc/nginx/fastcgi_params;
 
 
             fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-
 
         }
 
@@ -141,4 +134,4 @@ echo "⏳ Starting Nginx..."
 
 nginx \
 -c /home/container/nginx.conf \
--g "daemon off;"
+-g "error_log /home/container/logs/nginx/error.log; pid /home/container/tmp/nginx.pid; daemon off;"
